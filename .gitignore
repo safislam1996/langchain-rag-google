@@ -1,3 +1,3 @@
 .env
-langchain-rag-google/
-venv2/
+/langchain-rag-google
+/venv2
