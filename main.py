@@ -4,8 +4,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from pinecone import ServerlessSpec
+from pinecone import Pinecone
 import os
 import pinecone
 
@@ -40,3 +42,23 @@ if uploaded_files:
             docs.extend(loader.load())
             
         text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+        chunks=text_splitter.split_documents(docs)
+        st.write(f"Number of chunks created: {len(chunks)}")
+
+        embeddings=GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+
+        pn=Pinecone(pinecone_api_key)
+        index_name="rag-pdf-index"
+        if index_name not in pn.list_indexes().name:
+            st.write(f"Creating new Pinecone index")
+            pn.create_index(name=index_name,dimension=768,metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"))
+
+            st.write(f"Index: {index_name} created successfully")
+
+
+        pinecone_index=pn.Index(index_name)
+
+        pinecone_index.delete(delete_all=True)
+
+            
